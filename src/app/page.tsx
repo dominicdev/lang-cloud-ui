@@ -1,113 +1,251 @@
-import Image from "next/image";
+"use client"
+import ReactFlow, { 
+  Controls, 
+  Position, 
+  MarkerType,
+  Background,
+  MiniMap, 
+  useNodesState, 
+  useEdgesState  } from 'reactflow';
+import 'reactflow/dist/style.css';
+import { useEffect } from "react";
+import Link from "next/link";
+import { GrProjects } from "react-icons/gr";
+import { LuPencilLine } from "react-icons/lu";
+import mermaid from 'mermaid';
+
+const CustomNode = ({ data }) => {
+  return (
+    <div style={{
+      background: data.color,
+      border: '2px solid white',
+      padding: 10,
+      borderRadius: 5,
+      width: 150,
+      textAlign: 'center',
+      color: 'white',
+    }}>
+      <strong>{data.label}</strong>
+    </div>
+  );
+};
+
+const defaultEdgeOptions = {
+  style: { strokeWidth: 3, stroke: 'black' },
+  type: 'floating',
+  markerEnd: {
+    type: MarkerType.ArrowClosed,
+    color: 'black',
+  },
+};
+
+const nodeTypes = {
+  custom: CustomNode,
+};
+
+const initialNodes = [
+  {
+    id: 'start', 
+    type: 'custom',
+    position: { x: 250, y: 0 },
+    data: { label: 'Start', color: '#6ede87', fontColor: '#000' },
+  },
+  {
+    id: 'agent', 
+    position: { x: 250, y: 100 },
+    data: { label: 'Agent', color: '#ff9a3c', fontColor: '#000' },
+  },
+  {
+    id: 'action', 
+    position: { x: 150, y: 200 },
+    data: { label: 'Action', color: '#4ea5d9', fontColor: '#000' },
+  },
+  {
+    id: 'end', 
+    position: { x: 350, y: 200 },
+    data: { label: 'End', color: '#ff6b6b', fontColor: '#fff' },
+  },
+];
+
+const initialEdges = [
+  { id: 'e-start-agent', source: 'start', target: 'agent',
+    style: { stroke: 'white', strokeWidth: 1 }
+    },
+  { id: 'e-agent-action', source: 'agent', target: 'action',
+    style: { stroke: 'white', strokeWidth: 1 }
+    },
+  { 
+    id: 'e-action-agent', 
+    source: 'action', 
+    target: 'agent', 
+    animated: true, 
+    type: 'smoothstep',
+    label: "continue",
+    style: { stroke: '#f6ad55', strokeWidth: 2 },
+  },
+  { id: 'e-agent-end', source: 'agent', target: 'end',
+    style: { stroke: 'white', strokeWidth: 2 } },
+];
+
+const CustomEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  data,
+}) => {
+  const [edgePath] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+
+  return (
+    <>
+      <path
+        id={id}
+        style={{...style, strokeWidth: 2}}
+        className="react-flow__edge-path"
+        d={edgePath}
+      />
+      {data?.animated && (
+        <circle r="4" fill={'white'}>
+          <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
+        </circle>
+      )}
+    </>
+  );
+};
+
+const edgeTypes = {
+  custom: CustomEdge,
+};
 
 export default function Home() {
+
+  useEffect(() => {
+    mermaid.initialize({ startOnLoad: true });
+  }, []);
+
+  // const initialEdges = [
+  //   { id: '1-2', source: '1', target: '2' },
+  //   { id: '2-3', source: '2', target: '3', label: 'continue', markerEnd: { type: MarkerType.ArrowClosed },},
+  //   { id: '3-2', source: '3', target: '2', markerEnd: { type: MarkerType.ArrowClosed },},
+  //   { id: '2-4', source: '2', target: '4', label: 'end' , markerEnd: { type: MarkerType.ArrowClosed }, animated: true }
+  
+  // ];
+
+  // const initialNodes = [
+  //   {
+  //     id: '1', 
+  //     type: 'custom',
+  //     data: { label: '___START___' },
+  //     position: { x: 280, y: 20 },
+  //     type: 'input',
+  //   },
+  //   {
+  //     id: '2', 
+  //     data: { label: 'agent' },
+  //     position: { x: 280, y: 140 },
+      
+
+  //   },
+  //   {
+  //     id: '3',
+  //     data: { label: 'action' },
+  //     position: { x: 110, y: 280 },
+  //     type: 'bidirectional',
+  //     sourcePosition: Position.Left,
+  //     targetPosition: Position.Right,
+  //   },
+  //   {
+  //     id: '4',
+  //     data: { label: '__end__' },
+  //     position: { x: 440, y: 280 },
+  //     type: 'bidirectional',
+  //     sourcePosition: Position.Right,
+  //     targetPosition: Position.Left,
+  //   },
+  // ];
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+
+    <div className="flex h-full min-h-screen bg-gray-900 text-white">
+      {/* Sidebar */}
+
+      <div className="w-16 bg-gray-800 flex flex-col items-center py-4 border-r-2 border-blue-500/50">
+        {/* Logo */}
+        <div className="mb-8">
+          <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+            {/* Add your logo SVG path here */}
+          </svg>
+        </div>
+
+        {/* Navigation Icons */}
+        <nav className="flex flex-col space-y-4">
+          {/* Add icons for each nav item */}
+          <Link href="#" className="p-2 hover:bg-gray-700 rounded-lg">
+            <GrProjects className="w-6 h-6" />
+          </Link>
+          <Link href="#" className="p-2 hover:bg-gray-700 rounded-lg">
+            <LuPencilLine className="w-6 h-6" />
+          </Link>
+
+          {/* Repeat for other nav items */}
+        </nav>
+      </div>
+      {/* Main Content */}
+      <div className="flex-1 p-8 px-0 h-full">
+        <div className="flex w-full border-b-2 border-blue-500/50 mb-4 px-8 ">
+          {/* Breadcrumb */}
+          <div className="text-sm text-gray-400 mb-4">
+            Personal &gt; Deployments
+          </div>
+
+        </div>
+        <div className="">
+          <div className="w-full h-full ">
+            <div className="w-1/2 h-[560px] border-r-2 border-blue-500/50 ">
+              <div style={{ height: '80%' }}>
+                <ReactFlow 
+                nodes={nodes}
+                edges={edges}
+                defaultEdgeOptions={defaultEdgeOptions} 
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes} 
+                onlyRenderVisibleNodes={false}
+                > 
+                </ReactFlow>
+              </div>
+              <div className=' w-full rounded px-8  '> 
+                <div className='w-ful p-5 bg-blue-950/40'>
+                <label className='font-bold'>Input</label>
+                <div className='text-'>
+                  <label>Message</label>
+                  <input className='border w-full text-white bg-transparent p-3' placeholder='Enter Message' />
+                  </div>
+                </div>
+              </div>
+
+
+            </div>
+            <div className="w-1/2  ">
+
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
 }

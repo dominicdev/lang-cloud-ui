@@ -1,19 +1,25 @@
 "use client"
-import ReactFlow, { 
+import ReactFlow, {
+  Background, 
   Controls, 
-  Position, 
-  MarkerType,
-  Background,
   MiniMap, 
   useNodesState, 
-  useEdgesState  } from 'reactflow';
+  useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
+  MarkerType,  
+} from 'reactflow';
 import 'reactflow/dist/style.css';
-import { useEffect } from "react";
+import { useEffect,useRef,useCallback  } from "react";
 import Link from "next/link";
 import { GrProjects } from "react-icons/gr";
 import { LuPencilLine } from "react-icons/lu";
 import mermaid from 'mermaid';
-
+import AgentNode from './components/agentnode';
+import ActionNode from './components/actionnode';
+import EndNode from './components/endNode';
+import StartNode from './components/startNode';
+import { type } from 'os';
 const CustomNode = ({ data }) => {
   return (
     <div style={{
@@ -39,52 +45,78 @@ const defaultEdgeOptions = {
   },
 };
 
+
+
 const nodeTypes = {
   custom: CustomNode,
+  agentnode: AgentNode,
+  actionnode: ActionNode,
+  endNode:EndNode,
+  startNode:StartNode,
 };
 
 const initialNodes = [
   {
-    id: 'start', 
-    type: 'custom',
+    id: 'start',
+    type: 'startNode',
     position: { x: 250, y: 0 },
-    data: { label: 'Start', color: '#6ede87', fontColor: '#000' },
+    data: { label: 'start', color: '#6ede87', fontColor: '#000' },
   },
   {
-    id: 'agent', 
+    id: 'agent',
+    type: "agentnode",
     position: { x: 250, y: 100 },
-    data: { label: 'Agent', color: '#ff9a3c', fontColor: '#000' },
+    data: { label: 'agent', color: '#ff9a3c', fontColor: '#000' },
   },
   {
-    id: 'action', 
+    id: 'action',
+    type: "actionnode",
     position: { x: 150, y: 200 },
-    data: { label: 'Action', color: '#4ea5d9', fontColor: '#000' },
+    data: { label: 'action', color: '#4ea5d9', fontColor: '#000' },
   },
   {
-    id: 'end', 
+    id: 'end',
+    type: 'endNode',
     position: { x: 350, y: 200 },
-    data: { label: 'End', color: '#ff6b6b', fontColor: '#fff' },
+    data: { label: 'end', color: '#ff6b6b', fontColor: '#fff' },
   },
 ];
 
 const initialEdges = [
-  { id: 'e-start-agent', source: 'start', target: 'agent',
-    style: { stroke: 'white', strokeWidth: 1 }
-    },
-  { id: 'e-agent-action', source: 'agent', target: 'action',
-    style: { stroke: 'white', strokeWidth: 1 }
-    },
-  { 
-    id: 'e-action-agent', 
-    source: 'action', 
-    target: 'agent', 
-    animated: true, 
-    type: 'smoothstep',
-    label: "continue",
-    style: { stroke: '#f6ad55', strokeWidth: 2 },
+  {
+    id: 'e-start-agent', source: 'start', target: 'agent',
+    style: { stroke: 'white', strokeWidth: 2 }
   },
-  { id: 'e-agent-end', source: 'agent', target: 'end',
-    style: { stroke: 'white', strokeWidth: 2 } },
+  {
+    id:
+      'e-agent-action',
+    source: 'agent',
+    target: 'action',
+    type: 'smoothstep', 
+    style: { stroke: 'white', strokeWidth: 2 }, 
+    markerEnd: { type: MarkerType.ArrowClosed, color: 'white' }
+  },
+  {
+    id: 'e-action-agent',
+    source: 'action',
+    animated: true,
+    target: 'agent',
+    type: 'smoothstep',
+    sourceHandle: 'a',
+    label: "continue",
+    style: { stroke: '#f6ad55', strokeWidth: 2, background: 'transparent' }
+  },
+  {
+    id: 'e-agent-end',
+    source: 'agent',
+    animated: true,
+    target: 'end',
+    type: 'smoothstep',
+    sourceHandle: 'c',
+    label: "end",
+    style: { stroke: 'white', strokeWidth: 2 }, 
+    markerEnd: { type: MarkerType.ArrowClosed, color: 'white' }
+  },
 ];
 
 const CustomEdge = ({
@@ -111,7 +143,7 @@ const CustomEdge = ({
     <>
       <path
         id={id}
-        style={{...style, strokeWidth: 2}}
+        style={{ ...style, strokeWidth: 2 }}
         className="react-flow__edge-path"
         d={edgePath}
       />
@@ -128,55 +160,43 @@ const edgeTypes = {
   custom: CustomEdge,
 };
 
-export default function Home() {
+export default  function FlowWithProvider() {
+  return (
+    <ReactFlowProvider>
+      <Home />
+    </ReactFlowProvider>
+  );
+}
+
+
+function Home() {
 
   useEffect(() => {
     mermaid.initialize({ startOnLoad: true });
   }, []);
+ 
 
-  // const initialEdges = [
-  //   { id: '1-2', source: '1', target: '2' },
-  //   { id: '2-3', source: '2', target: '3', label: 'continue', markerEnd: { type: MarkerType.ArrowClosed },},
-  //   { id: '3-2', source: '3', target: '2', markerEnd: { type: MarkerType.ArrowClosed },},
-  //   { id: '2-4', source: '2', target: '4', label: 'end' , markerEnd: { type: MarkerType.ArrowClosed }, animated: true }
-  
-  // ];
-
-  // const initialNodes = [
-  //   {
-  //     id: '1', 
-  //     type: 'custom',
-  //     data: { label: '___START___' },
-  //     position: { x: 280, y: 20 },
-  //     type: 'input',
-  //   },
-  //   {
-  //     id: '2', 
-  //     data: { label: 'agent' },
-  //     position: { x: 280, y: 140 },
-      
-
-  //   },
-  //   {
-  //     id: '3',
-  //     data: { label: 'action' },
-  //     position: { x: 110, y: 280 },
-  //     type: 'bidirectional',
-  //     sourcePosition: Position.Left,
-  //     targetPosition: Position.Right,
-  //   },
-  //   {
-  //     id: '4',
-  //     data: { label: '__end__' },
-  //     position: { x: 440, y: 280 },
-  //     type: 'bidirectional',
-  //     sourcePosition: Position.Right,
-  //     targetPosition: Position.Left,
-  //   },
-  // ];
-
+  const { fitView, setCenter } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  const reactFlowWrapper = useRef(null);
+
+  // Center the flow when component mounts or nodes change
+  useEffect(() => {
+    if (reactFlowWrapper.current) {
+      fitView({ padding: 0.2, duration: 800 });
+      centerFlow()
+    }
+  }, [nodes, fitView]);
+
+  // Function to center the flow on demand
+  const centerFlow = useCallback(() => {
+    if (reactFlowWrapper.current) {
+      const { width, height } = reactFlowWrapper.current.getBoundingClientRect();
+      setCenter(width / 2, height / 2, { zoom: 0.5, duration: 800 });
+    }
+  }, [setCenter]);
 
   return (
 
@@ -216,23 +236,24 @@ export default function Home() {
         <div className="">
           <div className="w-full h-full ">
             <div className="w-1/2 h-[560px] border-r-2 border-blue-500/50 ">
-              <div style={{ height: '80%' }}>
-                <ReactFlow 
-                nodes={nodes}
-                edges={edges}
-                defaultEdgeOptions={defaultEdgeOptions} 
-                nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes} 
-                onlyRenderVisibleNodes={false}
-                > 
+              <div ref={reactFlowWrapper} style={{ width: '100%', height: '80%' }} >
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  defaultEdgeOptions={defaultEdgeOptions}
+                  nodeTypes={nodeTypes}
+                  edgeTypes={edgeTypes}
+                  onlyRenderVisibleNodes={false} 
+                  fitView
+                >
                 </ReactFlow>
               </div>
-              <div className=' w-full rounded px-8  '> 
+              <div className=' w-full rounded px-8  '>
                 <div className='w-ful p-5 bg-blue-950/40'>
-                <label className='font-bold'>Input</label>
-                <div className='text-'>
-                  <label>Message</label>
-                  <input className='border w-full text-white bg-transparent p-3' placeholder='Enter Message' />
+                  <label className='font-bold'>Input</label>
+                  <div className='text-'>
+                    <label>Message</label>
+                    <input className='border w-full text-white bg-transparent p-3' placeholder='Enter Message' />
                   </div>
                 </div>
               </div>
